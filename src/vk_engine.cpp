@@ -27,7 +27,7 @@ void FlushEngine::init()
     SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_VULKAN);
 
     _window = SDL_CreateWindow(
-        "Vulkan Engine",
+        "Flush Engine",
         SDL_WINDOWPOS_UNDEFINED,
         SDL_WINDOWPOS_UNDEFINED,
         _windowExtent.width,
@@ -47,7 +47,7 @@ void FlushEngine::init_vulkan()
 {
     vkb::InstanceBuilder builder;
 
-    auto inst_ret = builder.set_app_name("Vk_flush")
+    auto inst_ret = builder.set_app_name("Flush Engine")
         .request_validation_layers(true) // Change this to bUseVaildtaionLayers 
         .use_default_debug_messenger()
         .require_api_version(1, 3, 0)
@@ -173,4 +173,31 @@ void FlushEngine::run()
 
         draw();
     }
+}
+
+void FlushEngine::create_swapchain(uint32_t width, uint32_t height)
+{
+    vkb::SwapchainBuilder swapchainBuilder{ _chosenGPU,_device,_surface };
+    
+    _swapchainImageFormat = VK_FORMAT_B8G8R8A8_UNORM;
+
+    vkb::Swapchain vkbSwapchain = swapchainBuilder
+		// .use_default_format_selection()
+        .set_desired_format(VkSurfaceFormatKHR{ .format = _swapchainImageFormat, .colorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR })
+		//use Vsync
+        .set_desired_present_mode(VK_PRESENT_MODE_FIFO_KHR)
+        .add_image_usage_flags(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
+		.set_desired_extent(width, height)
+		.build()
+		.value();
+
+    _swapchainExtent = vkbSwapchain.extent;
+    _swapchain = vkbSwapchain.swapchain;
+    _swapchainImages = vkbSwapchain.get_images().value();
+    _swapchainImageViews = vkbSwapchain.get_image_views().value();
+}
+
+void FlushEngine::init_spawnchain()
+{
+    create_swapchain(_windowExtent.width, _windowExtent.height);
 }

@@ -5,26 +5,36 @@ cmake_minimum_required (VERSION 3.8)
 
 project ("flush-engine")
 
+# Ensure C++20 standard is used
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Find Vulkan
 find_package(Vulkan REQUIRED)
 
+# Add third-party libraries
 add_subdirectory(third_party)
 
+# Set output directories
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/bin")
 set (CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/bin")
 
+# Add source directory
 add_subdirectory(src)
 
-find_program(GLSL_VALIDATOR glslangValidator HINTS /usr/bin /usr/local/bin $ENV{VULKAN_SDK}/Bin/ $ENV{VULKAN_SDK}/Bin32/)
+# Find GLSL validator
+if(APPLE)
+    find_program(GLSL_VALIDATOR glslangValidator HINTS /usr/local/bin $ENV{VULKAN_SDK}/macOS/bin/)
+else()
+    find_program(GLSL_VALIDATOR glslangValidator HINTS /usr/bin /usr/local/bin $ENV{VULKAN_SDK}/Bin/ $ENV{VULKAN_SDK}/Bin32/)
+endif()
 
-
-
-
+# Shader compilation
 file(GLOB_RECURSE GLSL_SOURCE_FILES
     "${PROJECT_SOURCE_DIR}/shaders/*.frag"
     "${PROJECT_SOURCE_DIR}/shaders/*.vert"
     "${PROJECT_SOURCE_DIR}/shaders/*.comp"
-    )
+)
 
 foreach(GLSL ${GLSL_SOURCE_FILES})
   message(STATUS "BUILDING SHADER")
@@ -41,4 +51,4 @@ endforeach(GLSL)
 add_custom_target(
     Shaders 
     DEPENDS ${SPIRV_BINARY_FILES}
-    )
+)
