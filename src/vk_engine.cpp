@@ -48,50 +48,73 @@ void FlushEngine::init_vulkan()
     vkb::InstanceBuilder builder;
 
     auto inst_ret = builder.set_app_name("Flush Engine")
-        .request_validation_layers(true) // Change this to bUseVaildtaionLayers 
+        .request_validation_layers(bUseValidationLayers) // Change this to bUseVaildtaionLayers
         .use_default_debug_messenger()
         .require_api_version(1, 3, 0)
         .build();
 
     vkb::Instance vkb_inst = inst_ret.value();
 
+    _instance = vkb_inst.instance;
+    _debug_messenger = vkb_inst.debug_messenger;
+
     // create the surface
     SDL_Vulkan_CreateSurface(_window, _instance, &_surface);
 
-    // Vulkan 1.2 device features
+    //vulkan 1.3 features
+    VkPhysicalDeviceVulkan13Features features{};
+    features.dynamicRendering = true;
+    features.synchronization2 = true;
+
+    //vulkan 1.2 features
     VkPhysicalDeviceVulkan12Features features12{};
     features12.bufferDeviceAddress = true;
     features12.descriptorIndexing = true;
 
-	// Vulkan 1.3 device features
-	VkPhysicalDeviceVulkan13Features features{};
-    features.dynamicRendering = true;
-    features.synchronization2 = true;
-
     // using vkbootstrap to pick a physical device.
     // We want a GPU that can render stuff with Vulkan 1.3 and write SDL surface.
     vkb::PhysicalDeviceSelector selector{ vkb_inst };
-    vkb::PhysicalDevice physical_device = selector
+    vkb::PhysicalDevice physicalDevice = selector
         .set_minimum_version(1, 3)
         .set_required_features_13(features)
         .set_required_features_12(features12)
+        .set_surface(_surface)
         .select()
         .value();
 
-    vkb::DeviceBuilder device_builder{ physical_device };
+    vkb::DeviceBuilder device_builder{ physicalDevice };
     //grab the instance from the builder
-    _instance = vkb_inst.instance;
-    _debug_messenger = vkb_inst.debug_messenger;
 
-    vkb::Device vkb_device = device_builder.build().value();
+    vkb::Device vkbDevice = device_builder.build().value();
 
-	_device = vkb_device.device;
-	_chosenGPU = physical_device.physical_device;
+	_device = vkbDevice.device;
+	_chosenGPU = physicalDevice.physical_device;
     
     // everything went fine
     _isInitialized = true;
 }
 
+void FlushEngine::create_swapchain(uint32_t width, uint32_t height)
+{
+    vkb::SwapchainBuilder swapchainBuilder{ _chosenGPU,_device,_surface };
+
+    _swapchainImageFormat = VK_FORMAT_B8G8R8A8_UNORM;
+
+    vkb::Swapchain vkbSwapchain = swapchainBuilder
+        // .use_default_format_selection()
+        .set_desired_format(VkSurfaceFormatKHR{ .format = _swapchainImageFormat, .colorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR })
+        //use Vsync
+        .add_image_usage_flags(VK_IMAGE_USAGE_TRANSFER_DST_BIT)
+        .set_desired_extent(width, height)
+        .set_desired_present_mode(VK_PRESENT_MODE_FIFO_KHR)
+        .build()
+        .value();
+
+    _swapchainExtent = vkbSwapchain.extent;
+    _swapchain = vkbSwapchain.swapchain;
+    _swapchainImages = vkbSwapchain.get_images().value();
+    _swapchainImageViews = vkbSwapchain.get_image_views().value();
+}
 
 void FlushEngine::init_spawnchain()
 {
@@ -121,6 +144,8 @@ void FlushEngine::destroy_swapchain()
 void FlushEngine::cleanup()
 {
     if (_isInitialized) {
+        // ERROR: Inst destroyed before others
+        //vkDestroyInstance(_instance, nullptr);
 
         destroy_swapchain();
 
@@ -173,31 +198,4 @@ void FlushEngine::run()
 
         draw();
     }
-}
-
-void FlushEngine::create_swapchain(uint32_t width, uint32_t height)
-{
-    vkb::SwapchainBuilder swapchainBuilder{ _chosenGPU,_device,_surface };
-    
-    _swapchainImageFormat = VK_FORMAT_B8G8R8A8_UNORM;
-
-    vkb::Swapchain vkbSwapchain = swapchainBuilder
-		// .use_default_format_selection()
-        .set_desired_format(VkSurfaceFormatKHR{ .format = _swapchainImageFormat, .colorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR })
-		//use Vsync
-        .set_desired_present_mode(VK_PRESENT_MODE_FIFO_KHR)
-        .add_image_usage_flags(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
-		.set_desired_extent(width, height)
-		.build()
-		.value();
-
-    _swapchainExtent = vkbSwapchain.extent;
-    _swapchain = vkbSwapchain.swapchain;
-    _swapchainImages = vkbSwapchain.get_images().value();
-    _swapchainImageViews = vkbSwapchain.get_image_views().value();
-}
-
-void FlushEngine::init_spawnchain()
-{
-    create_swapchain(_windowExtent.width, _windowExtent.height);
 }
