@@ -1,4 +1,4 @@
-﻿//> includes
+//> includes
 #include "vk_engine.h"
 
 #include <SDL.h>
@@ -195,9 +195,4 @@ void FlushEngine::create_swapchain(uint32_t width, uint32_t height)
     _swapchain = vkbSwapchain.swapchain;
     _swapchainImages = vkbSwapchain.get_images().value();
     _swapchainImageViews = vkbSwapchain.get_image_views().value();
-}
-
-void FlushEngine::init_spawnchain()
-{
-    create_swapchain(_windowExtent.width, _windowExtent.height);
 }

@@ -1,6 +1,7 @@
+# src/CMakeLists.txt
 
 # Add source to this project's executable.
-add_executable (engine 
+add_executable(engine 
   main.cpp
   vk_types.h
   vk_initializers.cpp
@@ -30,4 +31,4 @@ target_precompile_headers(engine PUBLIC <optional> <vector> <memory> <string> <v
 add_custom_command(TARGET engine POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:engine> $<TARGET_FILE_DIR:engine>
   COMMAND_EXPAND_LISTS
-  )
+)
