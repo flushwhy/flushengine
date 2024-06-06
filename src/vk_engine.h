@@ -8,6 +8,7 @@
 
 class FlushEngine {
 public:
+	static constexpr unsigned int FRAME_OVERLAP = 2;
 
 	VkInstance _instance;
 	VkDebugUtilsMessengerEXT _debug_messenger;
@@ -25,6 +26,18 @@ public:
 
 	struct SDL_Window* _window{ nullptr };
 
+	struct FrameData {
+
+		VkCommandPool _commandPool;
+		VkCommandBuffer _mainCommandBuffer;
+	};
+
+	FrameData _frames[FRAME_OVERLAP];
+	FrameData& get_current_frame() { return _frames[_frameNumber % FRAME_OVERLAP]; };
+
+	VkQueue _graphicsQueue;
+	uint32_t _graphicsQueueFamily;
+
 	static FlushEngine& Get();
 
 	//initializes everything in the engine
@@ -38,7 +51,6 @@ public:
 
 	//run main loop
 	void run();
-
 
 	std::vector<VkImage> _swapchainImages;
 	std::vector<VkImageView> _swapchainImageViews;
