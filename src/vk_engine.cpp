@@ -1,4 +1,4 @@
-﻿//> includes
+//> includes
 #include "vk_engine.h"
 
 #include <SDL.h>
@@ -217,4 +217,3 @@ void FlushEngine::run()
 
         draw();
     }
-}
