@@ -47,6 +47,21 @@ jobs:
         run: |
           sudo apt-get install -y vulkan-sdk
 
+      # Install Vulkan loader
+      - name: Install Vulkan loader
+        run: |
+          sudo apt-get install -y libvulkan-dev
+
+      # Install Vulkan validation layers and SPIR-V tools
+      - name: Install Vulkan validation layers
+        run: |
+          sudo apt-get install -y vulkan-validationlayers-dev spirv-tools
+
+      # Install Vulkan command-line utilities
+      - name: Install Vulkan command-line utilities
+        run: |
+          sudo apt-get install -y vulkan-tools
+
       # Verify Vulkan installation
       - name: Verify Vulkan SDK installation
         run: vulkaninfo || echo "Vulkan SDK installation failed"
