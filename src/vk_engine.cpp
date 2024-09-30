@@ -33,7 +33,7 @@ void FlushEngine::init()
         _windowExtent.width,
         _windowExtent.height,
         window_flags);
-    
+
     init_vulkan();
     init_spawnchain();
     init_commands();
@@ -143,8 +143,15 @@ void FlushEngine::init_commands()
 
 void FlushEngine::init_sync_structs()
 {
-	// nothing yet
-}
+    VkFenceCreateInfo fenceCreateInfo = vkinit::fence_create_info(VK_FENCE_CREATE_SIGNALED_BIT);
+    VkSemaphoreCreateInfo semaphoreInfo = vkinit::semaphore_create_info();
+
+    for (int i = 0; i < FRAME_OVERLAP; i++) {
+        VK_CHECK(vkCreateFence(_device, &fenceCreateInfo, nullptr, &_frames[i]._renderFence));
+        VK_CHECK(vkCreateSemaphore(_device, &semaphoreInfo, nullptr, &_frames[i]._swapchainSemaphore));
+        VK_CHECK(vkCreateSemaphore(_device, &semaphoreInfo, nullptr, &_frames[i]._renderSemaphore));
+    }
+} 
 
 void FlushEngine::destroy_swapchain()
 {
@@ -166,6 +173,7 @@ void FlushEngine::cleanup()
         for (int i = 0; i < FRAME_OVERLAP; i++) {
 			vkDestroyCommandPool(_device, _frames[i]._commandPool, nullptr);
         }
+
         destroy_swapchain();
 
         vkDestroySurfaceKHR(_instance, _surface, nullptr);
@@ -182,7 +190,16 @@ void FlushEngine::cleanup()
 
 void FlushEngine::draw()
 {
-    // nothing yet
+    VK_CHECK(vkWaitForFences(_device, 1, &get_current_frame()._renderFence, true, 1000000000));
+    VK_CHECK(vkResetFences(_device, 1, &get_current_frame()._renderFence));
+
+    uint32_t swapchainImageIndex;
+    VK_CHECK(vkAcquireNextImageKHR(_device, _swapchain, 1000000000, get_current_frame()._swapchainSemaphore, nullptr, &swapchainImageIndex));
+
+    VkCommandBuffer cmd = get_current_frame()._mainCommandBuffer;
+    VK_CHECK(vkResetCommandBuffer(cmd, 0));
+    VkCommandBufferBeginInfo cmdBeginInfo = vkinit::command_buffer_begin_info(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+    VK_CHECK(vkBeginCommandBuffer(cmd, &cmdBeginInfo));
 }
 
 void FlushEngine::run()

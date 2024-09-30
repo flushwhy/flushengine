@@ -9,7 +9,7 @@
 class FlushEngine {
 public:
 	static constexpr unsigned int FRAME_OVERLAP = 2;
-
+	
 	VkInstance _instance;
 	VkDebugUtilsMessengerEXT _debug_messenger;
 	VkPhysicalDevice _chosenGPU;
@@ -27,6 +27,9 @@ public:
 	struct SDL_Window* _window{ nullptr };
 
 	struct FrameData {
+
+		VkSemaphore _swapchainSemaphore, _renderSemaphore;
+		VkFence _renderFence;
 
 		VkCommandPool _commandPool;
 		VkCommandBuffer _mainCommandBuffer;
