@@ -1,0 +1,66 @@
+name: Build and Compile Shaders
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+
+    steps:
+      # Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Add the LunarG signing key
+      - name: Add LunarG signing key
+        run: |
+          wget -qO - https://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo apt-key add -
+
+      # Add the Vulkan SDK repository for version 1.3.280
+      - name: Add Vulkan SDK repository
+        run: |
+          sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-1.3.280-noble.list https://packages.lunarg.com/vulkan/1.3.290/lunarg-vulkan-1.3.280-noble.list
+
+      # Update package list and install Vulkan SDK
+      - name: Install Vulkan SDK
+        run: |
+          sudo apt update
+          sudo apt install -y vulkan-sdk
+
+      # Verify Vulkan installation
+      - name: Verify Vulkan SDK installation
+        run: vulkaninfo || echo "Vulkan SDK installation failed"
+
+      # Install CMake and other dependencies
+      - name: Install build dependencies
+        run: sudo apt-get install -y build-essential cmake
+
+      # Build the project with CMake
+      - name: Configure CMake project
+        run: |
+          mkdir build
+          cd build
+          cmake ..
+
+      - name: Build the project
+        run: |
+          cd build
+          cmake --build .
+
+      # Run shader compilation
+      - name: Compile shaders
+        run: |
+          cd build
+          cmake --build . --target Shaders
+
+      # Run tests if applicable
+      - name: Run tests
+        run: |
+          cd build
+          ctest --output-on-failure
