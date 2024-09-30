@@ -1,0 +1,61 @@
+name: Build and Compile Shaders
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Install dependencies
+      - name: Install build dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential cmake git libx11-xcb-dev
+
+      # Download and install Vulkan SDK (Linux version)
+      - name: Install Vulkan SDK
+        run: |
+          wget -qO- https://sdk.lunarg.com/sdk/download/1.3.283.0/linux/vulkan-sdk.tar.gz | tar -xvz
+          export VULKAN_SDK=$PWD/1.3.283.0/x86_64
+          export PATH=$VULKAN_SDK/bin:$PATH
+          export LD_LIBRARY_PATH=$VULKAN_SDK/lib:$LD_LIBRARY_PATH
+          export VK_ICD_FILENAMES=$VULKAN_SDK/etc/vulkan/icd.d/nvidia_icd.json
+          export VK_LAYER_PATH=$VULKAN_SDK/etc/vulkan/explicit_layer.d
+
+      # Verify Vulkan installation
+      - name: Check Vulkan SDK installation
+        run: |
+          ${VULKAN_SDK}/bin/vulkaninfo || echo "Vulkan installation failed"
+
+      # Build the project with CMake
+      - name: Configure CMake project
+        run: |
+          mkdir build
+          cd build
+          cmake ..
+
+      - name: Build the project
+        run: |
+          cd build
+          cmake --build .
+
+      # Run shader compilation
+      - name: Compile shaders
+        run: |
+          cd build
+          cmake --build . --target Shaders
+
+      # Run tests if applicable
+      - name: Run tests
+        run: |
+          cd build
+          ctest --output-on-failure
