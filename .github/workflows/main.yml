@@ -17,6 +17,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # Update package lists
+      - name: Update package lists
+        run: sudo apt-get update
+
+      # Install required dependencies for Vulkan SDK
+      - name: Install dependencies
+        run: |
+          sudo apt-get install -y wget software-properties-common
+          sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake
+
       # Add the LunarG signing key
       - name: Add LunarG signing key
         run: |
@@ -25,32 +37,20 @@ jobs:
       # Add the Vulkan SDK repository for version 1.3.280 (focal release)
       - name: Add Vulkan SDK repository
         run: |
-          sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-1.3.280-focal.list https://packages.lunarg.com/vulkan/1.3.280/lunarg-vulkan-1.3.280-focal.list
+          echo "deb https://packages.lunarg.com/vulkan/1.3.280/ focal main" | sudo tee /etc/apt/sources.list.d/lunarg-vulkan-1.3.280-focal.list
 
-      # Add PPA for missing dependencies (libjsoncpp1 and qt5-default)
-      - name: Add PPAs for missing dependencies
-        run: |
-          sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
-          sudo apt update
+      # Update package list again after adding the new repository
+      - name: Update package list
+        run: sudo apt-get update
 
-      # Install missing dependencies manually
-      - name: Install missing dependencies
-        run: |
-          sudo apt install -y libjsoncpp-dev qtbase5-dev
-
-      # Update package list and install Vulkan SDK
+      # Install Vulkan SDK
       - name: Install Vulkan SDK
         run: |
-          sudo apt update
-          sudo apt install -y vulkan-sdk
+          sudo apt-get install -y vulkan-sdk
 
       # Verify Vulkan installation
       - name: Verify Vulkan SDK installation
         run: vulkaninfo || echo "Vulkan SDK installation failed"
-
-      # Install CMake and other dependencies
-      - name: Install build dependencies
-        run: sudo apt-get install -y build-essential cmake
 
       # Build the project with CMake
       - name: Configure CMake project
