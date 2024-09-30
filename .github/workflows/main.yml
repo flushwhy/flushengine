@@ -25,9 +25,8 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get install -y wget software-properties-common
-          sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
-          sudo apt-get update
           sudo apt-get install -y build-essential cmake
+          sudo apt-get install -y libjsoncpp-dev qt5-default
 
       # Add the LunarG signing key
       - name: Add LunarG signing key
