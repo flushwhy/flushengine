@@ -1,0 +1,52 @@
+name: Linux Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Update package list and install Vulkan SDK and utilities
+      - name: Install Vulkan SDK and utilities
+        run: |
+          sudo apt update
+          sudo apt install -y vulkan-utils vulkan-headers
+
+      # Install CMake and other dependencies
+      - name: Install build dependencies
+        run: sudo apt install -y build-essential cmake
+
+      # Build the project with CMake
+      - name: Configure CMake project
+        run: |
+          mkdir build
+          cd build
+          cmake ..
+
+      - name: Build the project
+        run: |
+          cd build
+          cmake --build .
+
+      # Run shader compilation
+      - name: Compile shaders
+        run: |
+          cd build
+          cmake --build . --target Shaders
+
+      # Run tests if applicable
+      - name: Run tests
+        run: |
+          cd build
+          ctest --output-on-failure
