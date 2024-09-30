@@ -1,0 +1,46 @@
+name: Build and Compile Shaders
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Set up Vulkan SDK (Linux version)
+      - name: Install Vulkan SDK
+        run: |
+          sudo apt update
+          sudo apt install -y vulkan-utils libvulkan-dev glslang-tools
+
+      # Install CMake
+      - name: Install CMake
+        run: sudo apt-get install -y cmake
+
+      # Build the project with CMake
+      - name: Configure CMake project
+        run: |
+          mkdir build
+          cd build
+          cmake ..
+
+      - name: Build the project
+        run: |
+          cd build
+          cmake --build .
+
+      # Run shader compilation
+      - name: Compile shaders
+        run: |
+          cd build
+          cmake --build . --target Shaders
